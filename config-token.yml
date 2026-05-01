@@ -1,0 +1,13 @@
+tunnel: bio-smartx
+# Pas besoin de credentials-file avec token
+
+ingress:
+  - hostname: smartx.bio-smartx.com
+    service: http://localhost:8080
+  - hostname: app.bio-smartx.com
+    service: http://localhost:8080
+  - hostname: www.bio-smartx.com
+    service: http://localhost:8080
+  - hostname: bio-smartx.com
+    service: http://localhost:8080
+  - service: http_status:404

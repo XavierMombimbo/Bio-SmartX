@@ -1,0 +1,603 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Détail du détenu | SmartX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1d4ed8;
+            --primary-light: #dbeafe;
+            --success: #16a34a;
+            --danger: #dc3545;
+            --warning: #f59e0b;
+            --light: #f8f9fa;
+            --dark: #212529;
+        }
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .profile-header {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        .profile-photo {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .detail-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .detail-item {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f3f5;
+            display: flex;
+        }
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 500;
+            color: #495057;
+            min-width: 180px;
+        }
+        .detention-item {
+            padding: 1rem;
+            border-left: 4px solid var(--primary);
+            margin-bottom: 0.75rem;
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .detention-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .current-detention {
+            border-left-color: var(--danger);
+            background-color: #fff5f5;
+        }
+        .badge-status {
+            font-size: 0.8rem;
+            padding: 0.35rem 0.65rem;
+        }
+        .section-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .section-title i {
+            margin-right: 0.75rem;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #868e96;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #dee2e6;
+        }
+        .detention-modal .modal-header {
+            border-bottom: 2px solid var(--primary);
+        }
+        .detention-meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .meta-item {
+            flex: 1;
+            min-width: 150px;
+        }
+        .meta-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        .meta-value {
+            font-weight: 500;
+        }
+        .fingerprint-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .fingerprint-item {
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .fingerprint-item img {
+            max-width: 100%;
+            height: 100px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white;
+                font-size: 12pt;
+            }
+            .container {
+                width: 100%;
+                max-width: 100%;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h1 class="h3 mb-0 text-primary">
+            <i class="bi bi-person-badge-fill me-2"></i>
+            Détail du détenu
+        </h1>
+        <a href="{% url 'dernier_detenu' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Retour à la liste
+        </a>
+    </div>
+
+    <!-- Section profil -->
+    <div class="profile-header">
+        <div class="row g-0">
+            <div class="col-md-4 p-4 text-center border-end">
+                <!-- Photo de visage de face (type 'FACE') -->
+                {% for visage in detenu.visages.all %}
+                    {% if visage.type_image == 'FACE' and visage.image %}
+                        <img src="{{ visage.image.url }}" class="profile-photo mb-3" alt="Photo du détenu">
+                    {% endif %}
+                {% empty %}
+                    <div class="empty-state">
+                        <i class="bi bi-camera-off"></i>
+                        <p class="mb-0">Aucune photo disponible</p>
+                    </div>
+                {% endfor %}
+                
+                <!-- Boutons pour tous les visages et tous les doigts -->
+                <div class="d-flex justify-content-center gap-2 mt-2 no-print">
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#visageModal">
+                        <i class="bi bi-grid-3x3-gap-fill"></i> Tous les angles
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#empreinteModal">
+                        <i class="bi bi-grid-3x3-gap-fill"></i> Tous les doigts
+                    </button>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="p-4">
+                    <h3 class="mb-4">{{ detenu.nom }} {{ detenu.postnom }} {{ detenu.prenom }}</h3>
+                    
+                    <div class="detail-card">
+                        <div class="detail-item">
+                            <span class="detail-label"><i class="bi bi-gender-ambiguous me-2"></i>Sexe</span>
+                            <span>
+                                {% if detenu.sexe == 'M' %}Masculin
+                                {% elif detenu.sexe == 'F' %}Féminin
+                                {% else %}{{ detenu.sexe }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><i class="bi bi-calendar-date me-2"></i>Date de naissance</span>
+                            <span>{{ detenu.date_naissance|date:"d/m/Y" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><i class="bi bi-calendar-date me-2"></i>Date d'enregistrement</span>
+                            <span>{{ detenu.date_enregistrement|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><i class="bi bi-building me-2"></i>Prison</span>
+                            <span>{{ detenu.prison.nom|default:"Non affecté" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><i class="bi bi-person-gear me-2"></i>Agent enregistreur</span>
+                            <span>{{ detenu.agent.get_full_name|default:detenu.agent.username }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><i class="bi bi-geo-alt me-2"></i>Adresse</span>
+                            <span>{{ detenu.adresse|default:"Non renseignée" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label"><i class="bi bi-globe me-2"></i>Nationalité</span>
+                            <span>
+                                {% if detenu.nationalite == 'CONGOLAISE' %}Congolaise
+                                {% elif detenu.nationalite == 'ETRANGERE' %}Étrangère
+                                {% else %}{{ detenu.nationalite|default:"Non renseignée" }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <!-- Pièce d'identité -->
+                        {% with piece=detenu.pieces.first %}
+                        {% if piece %}
+                        <div class="detail-item">
+                            <span class="detail-label"><i class="bi bi-card-identification me-2"></i>Pièce d'identité</span>
+                            <span>{{ piece.get_type_piece_display }} ({{ piece.numero }})</span>
+                        </div>
+                        <div class="mt-1">
+                            <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#pieceModal">
+                                <i class="bi bi-card-image"></i> Voir la pièce
+                            </button>
+                        </div>
+                        {% else %}
+                        <div class="detail-item">
+                            <span class="detail-label"><i class="bi bi-card-identification me-2"></i>Pièce d'identité</span>
+                            <span class="text-muted">Non renseignée</span>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section détentions (inchangée) -->
+    <div class="mt-5">
+        <h4 class="section-title">
+            <i class="bi bi-file-text-fill"></i>
+            Historique des détentions
+        </h4>
+        
+        {% if detentions %}
+            <div class="mb-4">
+                {% for detention in detentions %}
+                    <div class="detention-item {% if not detention.date_fin %}current-detention{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="mb-0">{{ detention.cause|truncatechars:50 }}</h5>
+                            {% if not detention.date_fin %}
+                                <span class="badge bg-danger badge-status">En cours</span>
+                            {% else %}
+                                <span class="badge bg-success badge-status">Terminée</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex text-muted">
+                            <div class="me-4">
+                                <small class="text-uppercase fw-bold">Début</small>
+                                <div>{{ detention.date_debut|date:"d/m/Y" }}</div>
+                            </div>
+                            <div>
+                                <small class="text-uppercase fw-bold">Fin</small>
+                                <div>
+                                    {% if detention.date_fin %}
+                                        {{ detention.date_fin|date:"d/m/Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end mt-2 no-print">
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#detentionModal{{ detention.id }}">
+                                <i class="bi bi-eye me-1"></i> Voir détails
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Modal détention (inchangé) -->
+                    <div class="modal fade detention-modal" id="detentionModal{{ detention.id }}" tabindex="-1" aria-labelledby="detentionModalLabel{{ detention.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="detentionModalLabel{{ detention.id }}">
+                                        Détails de la détention
+                                        {% if not detention.date_fin %}
+                                            <span class="badge bg-danger ms-2">En cours</span>
+                                        {% endif %}
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body" id="detentionContent{{ detention.id }}">
+                                    <div class="detention-print-content">
+                                        <div class="detention-meta">
+                                            <div class="meta-item">
+                                                <div class="meta-label">Établissement</div>
+                                                <div class="meta-value">{{ detention.prison.nom }}</div>
+                                            </div>
+                                            <div class="meta-item">
+                                                <div class="meta-label">Date de début</div>
+                                                <div class="meta-value">{{ detention.date_debut|date:"d/m/Y" }}</div>
+                                            </div>
+                                            <div class="meta-item">
+                                                <div class="meta-label">Date de fin</div>
+                                                <div class="meta-value">
+                                                    {% if detention.date_fin %}
+                                                        {{ detention.date_fin|date:"d/m/Y" }}
+                                                    {% else %}
+                                                        <span class="text-danger">En cours</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="meta-item">
+                                                <div class="meta-label">Durée</div>
+                                                <div class="meta-value">
+                                                    {% if detention.date_fin %}
+                                                        {{ detention.date_debut|timesince:detention.date_fin }}
+                                                    {% else %}
+                                                        {{ detention.date_debut|timesince }} (en cours)
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-4">
+                                            <h6 class="fw-bold">Cause complète :</h6>
+                                            <p>{{ detention.cause|linebreaksbr }}</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <h6 class="fw-bold">Détenu :</h6>
+                                            <p>{{ detention.detenu.nom }} {{ detention.detenu.postnom }} {{ detention.detenu.prenom }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer d-flex justify-content-between">
+                                    <button onclick="printDetentionContent('detentionModal{{ detention.id }}')" class="btn btn-outline-primary">
+                                        <i class="bi bi-printer me-1"></i> Imprimer
+                                    </button>
+                                    <div>
+                                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
+                                            <i class="bi bi-x-circle me-1"></i> Fermer
+                                        </button>
+                                        {% if not detention.date_fin %}
+                                        <form method="POST" action="{% url 'liberer' detention.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="bi bi-unlock me-1"></i> Libérer le détenu
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                    function printDetentionContent(modalId) {
+                        const modal = document.getElementById(modalId);
+                        const printContent = modal.querySelector('.detention-print-content').innerHTML;
+                        const originalTitle = document.title;
+                        
+                        const printWindow = window.open('', '_blank');
+                        printWindow.document.write(`
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>Fiche de Détention - ${originalTitle}</title>
+                                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                                <style>
+                                    body { padding: 20px; font-family: Arial, sans-serif; }
+                                    .meta-item { margin-bottom: 15px; }
+                                    .meta-label { font-weight: bold; color: #495057; }
+                                    .meta-value { margin-left: 10px; }
+                                    h6.fw-bold { color: #1d4ed8; margin-top: 20px; }
+                                    .text-danger { color: #dc3545 !important; }
+                                    .badge { background-color: #dc3545; color: white; padding: 3px 6px; }
+                                    @page { size: auto; margin: 10mm; }
+                                    @media print {
+                                        body { padding: 0; font-size: 12pt; }
+                                        .meta-item { page-break-inside: avoid; }
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <h4 style="color: #1d4ed8; border-bottom: 1px solid #dee2e6; padding-bottom: 5px;">
+                                    Fiche de Détention
+                                </h4>
+                                ${printContent}
+                                <div style="margin-top: 30px; font-size: 0.8em; text-align: center; color: #6c757d;">
+                                    Document généré le ${new Date().toLocaleDateString()} à ${new Date().toLocaleTimeString()}
+                                </div>
+                                <script>
+                                    window.onload = function() {
+                                        setTimeout(function() {
+                                            window.print();
+                                            window.close();
+                                        }, 200);
+                                    };
+                                <\/script>
+                            </body>
+                            </html>
+                        `);
+                        printWindow.document.close();
+                    }
+                    </script>
+                {% endfor %}
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center no-print">
+                <button onclick="window.print()" class="btn btn-outline-primary">
+                    <i class="bi bi-printer me-1"></i> Imprimer
+                </button>
+                <a href="{% url 'ajouter_detention' detenu.id %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i> Ajouter une détention
+                </a>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="bi bi-file-earmark-excel"></i>
+                <h5 class="mb-2">Aucune détention enregistrée</h5>
+                <p class="text-muted mb-3">Ce détenu n'a pas encore fait l'objet d'une détention</p>
+                <div class="d-flex justify-content-center gap-3 no-print">
+                    <button onclick="window.print()" class="btn btn-outline-primary">
+                        <i class="bi bi-printer me-1"></i> Imprimer
+                    </button>
+                    <a href="{% url 'ajouter_detention' detenu.id %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i> Ajouter une détention
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- MODAL : tous les angles du visage -->
+<div class="modal fade" id="visageModal" tabindex="-1" aria-labelledby="visageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="visageModalLabel"><i class="bi bi-camera"></i> Tous les angles du visage</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    {% for angle in detenu.visages.all %}
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            {% if angle.image %}
+                                <img src="{{ angle.image.url }}" class="card-img-top" alt="Visage {{ angle.get_type_image_display }}" style="height: 200px; object-fit: cover;">
+                            {% else %}
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="bi bi-camera-off fs-1 text-muted"></i>
+                                </div>
+                            {% endif %}
+                            <div class="card-body text-center">
+                                <h6 class="card-title">{{ angle.get_type_image_display }}</h6>
+                                {% if angle.qualite %}
+                                    <small class="text-muted">Qualité : {{ angle.qualite|floatformat:2 }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center text-muted py-4">
+                        <i class="bi bi-camera-off fs-1"></i>
+                        <p>Aucune photo de visage enregistrée.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL : toutes les empreintes (10 doigts) avec fallback -->
+<div class="modal fade" id="empreinteModal" tabindex="-1" aria-labelledby="empreinteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="empreinteModalLabel"><i class="bi bi-fingerprint"></i> Empreintes digitales (10 doigts)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="fingerprint-grid">
+                    {% with doigts_list='TL,IL,ML,RL,LL,TR,IR,MR,RR,LR' %}
+                    {% with labels='Pouce gauche,Index gauche,Majeur gauche,Annulaire gauche,Auriculaire gauche,Pouce droit,Index droit,Majeur droit,Annulaire droit,Auriculaire droit' %}
+                        {% for code in doigts_list.split %}
+                            {% with label=labels.split|slice:forloop.counter0|first %}
+                                {% with empreinte_trouvee=False %}
+                                    {% for e in detenu.empreintes.all %}
+                                        {% if e.doigt == code %}
+                                            <div class="fingerprint-item">
+                                                <img src="{{ e.image.url }}" alt="Empreinte {{ label }}">
+                                                <div class="mt-2 fw-bold">{{ label }}</div>
+                                                {% if e.qualite %}<small class="text-muted">Qualité: {{ e.qualite|floatformat:2 }}</small>{% endif %}
+                                            </div>
+                                            {% with empreinte_trouvee=True %}{% endwith %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if not empreinte_trouvee %}
+                                        <div class="fingerprint-item">
+                                            <div class="bg-light d-flex align-items-center justify-content-center" style="height: 100px;">
+                                                <i class="bi bi-fingerprint text-muted fs-1"></i>
+                                            </div>
+                                            <div class="mt-2 fw-bold text-muted">{{ label }}</div>
+                                            <small class="text-muted">Non enregistré</small>
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
+                            {% endwith %}
+                        {% endfor %}
+                    {% endwith %}
+                    {% endwith %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL : pièce d'identité -->
+<div class="modal fade" id="pieceModal" tabindex="-1" aria-labelledby="pieceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="pieceModalLabel"><i class="bi bi-card-identification"></i> Pièce d'identité</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body text-center">
+                {% with piece=detenu.pieces.first %}
+                    {% if piece and piece.image %}
+                        <img src="{{ piece.image.url }}" class="img-fluid rounded" alt="Pièce d'identité">
+                        <div class="mt-3">
+                            <p><strong>Type :</strong> {{ piece.get_type_piece_display }}</p>
+                            <p><strong>Numéro :</strong> {{ piece.numero }}</p>
+                            {% if piece.pays_emission %}<p><strong>Pays d'émission :</strong> {{ piece.pays_emission }}</p>{% endif %}
+                            {% if piece.date_expiration %}<p><strong>Date d'expiration :</strong> {{ piece.date_expiration|date:"d/m/Y" }}</p>{% endif %}
+                        </div>
+                    {% else %}
+                        <i class="bi bi-card-image fs-1 text-muted"></i>
+                        <p>Aucune image de pièce d'identité disponible.</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="mt-5 py-4 border-top no-print">
+    <div class="container text-center text-muted">
+        <p class="mb-0">&copy; {% now "Y" %} Smart-X Congo — Tous droits réservés</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Initialisation explicite des modals (optionnel)
+    document.addEventListener('DOMContentLoaded', function() {
+        const visageModal = document.getElementById('visageModal');
+        if (visageModal) new bootstrap.Modal(visageModal);
+        const empreinteModal = document.getElementById('empreinteModal');
+        if (empreinteModal) new bootstrap.Modal(empreinteModal);
+        const pieceModal = document.getElementById('pieceModal');
+        if (pieceModal) new bootstrap.Modal(pieceModal);
+    });
+</script>
+</body>
+</html>

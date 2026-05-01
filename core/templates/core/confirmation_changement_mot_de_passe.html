@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Confirmation du changement</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md text-center">
+        <h2 class="text-2xl font-bold text-green-600 mb-4">Mot de passe modifié</h2>
+        <p class="text-gray-700">Votre mot de passe a été changé avec succès.</p>
+        <a href="{% url 'login' %}" class="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Se connecter
+        </a>
+    </div>
+    <footer class="text-center mt-5 py-1">
+        <small>&copy; 2025 SmartX. Tous droits réservés.</small>
+    </footer>
+</body>
+</html>

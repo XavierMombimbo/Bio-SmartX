@@ -1,0 +1,13 @@
+tunnel: bio-smartx
+credentials-file: C:\Users\Dell Latitude 5400\.cloudflared\tunnel-creds.json
+
+ingress:
+  - hostname: smartx.bio-smartx.com
+    service: http://localhost:8080
+  - hostname: app.bio-smartx.com
+    service: http://localhost:8080
+  - hostname: www.bio-smartx.com
+    service: http://localhost:8080
+  - hostname: bio-smartx.com
+    service: http://localhost:8080
+  - service: http_status:404

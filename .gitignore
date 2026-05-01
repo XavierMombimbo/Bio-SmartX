@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+env/
+env_linux/
+smartx-env/
+venv/
+
+# Django
+*.log
+*.pot
+db.sqlite3
+staticfiles/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*creds*.json
+*token*.json
+gsk_*.txt
+db.txt
+
+# User uploads / biometric data
+media/
+fingerprint.png
+debug_visage_detecte.jpg
+core/static/debug_visage_detecte.jpg
+
+# Build and OS files
+*.whl
+.DS_Store
+Thumbs.db
+.vscode/

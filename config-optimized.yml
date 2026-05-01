@@ -1,0 +1,56 @@
+tunnel: bio-smartx
+credentials-file: ./tunnel-creds-new.json
+protocol: http2
+
+ingress:
+  - hostname: test.bio-smartx.com
+    service: http://192.168.19.10:8080
+    originRequest:
+      httpHostHeader: test.bio-smartx.com
+      noTLSVerify: true
+      connectTimeout: 30s
+      tlsTimeout: 30s
+      disableChunkedEncoding: true
+      proxyType: ""
+  
+  - hostname: www.bio-smartx.com
+    service: http://192.168.19.10:8080
+    originRequest:
+      httpHostHeader: www.bio-smartx.com
+      noTLSVerify: true
+      connectTimeout: 30s
+      tlsTimeout: 30s
+      disableChunkedEncoding: true
+      proxyType: ""
+  
+  - hostname: bio-smartx.com
+    service: http://192.168.19.10:8080
+    originRequest:
+      httpHostHeader: bio-smartx.com
+      noTLSVerify: true
+      connectTimeout: 30s
+      tlsTimeout: 30s
+      disableChunkedEncoding: true
+      proxyType: ""
+  
+  - hostname: smartx.bio-smartx.com
+    service: http://192.168.19.10:8080
+    originRequest:
+      httpHostHeader: smartx.bio-smartx.com
+      noTLSVerify: true
+      connectTimeout: 30s
+      tlsTimeout: 30s
+      disableChunkedEncoding: true
+      proxyType: ""
+  
+  - hostname: app.bio-smartx.com
+    service: http://192.168.19.10:8080
+    originRequest:
+      httpHostHeader: app.bio-smartx.com
+      noTLSVerify: true
+      connectTimeout: 30s
+      tlsTimeout: 30s
+      disableChunkedEncoding: true
+      proxyType: ""
+  
+  - service: http_status:404

@@ -1,0 +1,503 @@
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification Biométrique | Système de Gestion Pénitentiaire</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* (tous les styles inchangés) */
+        :root {
+            --primary: #1d4ed8;
+            --primary-light: #dbeafe;
+            --danger: #dc3545;
+            --success: #28a745;
+            --info: #17a2b8;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa; padding: 2rem 0; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 0 1rem; }
+        .header { margin-bottom: 2rem; border-bottom: 1px solid #e9ecef; padding-bottom: 1rem; }
+        .header h2 { color: var(--primary); font-weight: 600; }
+        .form-card { background: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 2rem; border: none; overflow: hidden; }
+        .form-card-header { background-color: var(--primary-light); padding: 1rem 1.5rem; font-weight: 600; color: var(--primary); border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .form-card-body { padding: 1.5rem; }
+        .webcam-preview { background: #f8f9fa; border-radius: 12px; padding: 1rem; text-align: center; }
+        #video { width: 100%; max-width: 400px; border-radius: 12px; background: #000; margin-bottom: 0.5rem; }
+        .preview-box { background: #f1f3f5; border-radius: 12px; padding: 1rem; text-align: center; min-height: 200px; display: flex; align-items: center; justify-content: center; }
+        .preview-box img { max-width: 100%; max-height: 180px; border-radius: 8px; }
+        .result-card { background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 2rem; border: 1px solid rgba(0,0,0,0.05); }
+        .result-header { background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%); color: white; padding: 1.5rem 2rem; }
+        .result-header h3 { margin: 0; font-weight: 600; }
+        .result-body { padding: 2rem; }
+        .profile-field { display: flex; margin-bottom: 12px; }
+        .profile-field strong { min-width: 180px; color: #374151; font-weight: 500; }
+        .score-circle { margin: 0 auto; }
+        .actions { display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e9ecef; }
+        .btn-outline-primary { border-color: var(--primary); color: var(--primary); }
+        .btn-outline-primary:hover { background-color: var(--primary); color: white; }
+        .modal-header.bg-primary { background-color: var(--primary); }
+        .fingerprint-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .fingerprint-item { text-align: center; background: #f8f9fa; border-radius: 8px; padding: 10px; }
+        .fingerprint-item img { max-width: 100%; height: 100px; object-fit: contain; }
+        @media (max-width: 768px) {
+            .profile-field { flex-direction: column; }
+            .profile-field strong { margin-bottom: 4px; }
+            .result-header, .result-body { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    {% if detenu_reconnu %}
+    <!-- ================= RÉSULTAT DE LA VÉRIFICATION ================= -->
+    <div class="result-card">
+        <div class="result-header">
+            <h3><i class="bi bi-person-check-fill me-2"></i> Correspondance trouvée</h3>
+            <p class="mb-0 mt-2 opacity-75">Authentification réussie – voici les détails du détenu</p>
+        </div>
+        <div class="result-body">
+            <div class="row g-4">
+                <!-- Colonne gauche : infos -->
+                <div class="col-md-8">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4 class="text-primary mb-3"><i class="bi bi-person-badge"></i> Identité</h4>
+                            <div class="profile-field"><strong>Nom :</strong> <span>{{ detenu_reconnu.nom }}</span></div>
+                            <div class="profile-field"><strong>Postnom :</strong> <span>{{ detenu_reconnu.postnom }}</span></div>
+                            <div class="profile-field"><strong>Prénom :</strong> <span>{{ detenu_reconnu.prenom }}</span></div>
+                            <div class="profile-field"><strong>Sexe :</strong> <span>{% if detenu_reconnu.sexe == 'M' %}Masculin{% elif detenu_reconnu.sexe == 'F' %}Féminin{% else %}{{ detenu_reconnu.sexe }}{% endif %}</span></div>
+                            <div class="profile-field"><strong>Date naiss. :</strong> <span>{{ detenu_reconnu.date_naissance|date:"d/m/Y" }}</span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h4 class="text-primary mb-3"><i class="bi bi-building"></i> Détention</h4>
+                            <div class="profile-field"><strong>Enregistré le :</strong> <span>{{ detenu_reconnu.date_enregistrement|date:"d/m/Y H:i" }}</span></div>
+                            <div class="profile-field"><strong>Adresse :</strong> <span>{{ detenu_reconnu.adresse|default:"Non renseignée" }}</span></div>
+                            <div class="profile-field"><strong>Nationalité :</strong> <span>{% if detenu_reconnu.nationalite == 'CONGOLAISE' %}Congolaise{% elif detenu_reconnu.nationalite == 'ETRANGERE' %}Étrangère{% else %}{{ detenu_reconnu.nationalite|default:"—" }}{% endif %}</span></div>
+                            <div class="profile-field"><strong>Prison :</strong> <span>{{ detenu_reconnu.prison.nom|default:"Non affecté" }}</span></div>
+                            <!-- Pièce d'identité -->
+                            {% with piece=detenu_reconnu.pieces.first %}
+                            {% if piece %}
+                            <div class="profile-field"><strong>Pièce d'identité :</strong> <span>{{ piece.get_type_piece_display }} ({{ piece.numero }})</span></div>
+                            <div class="mt-1">
+                                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#pieceModal">
+                                    <i class="bi bi-card-image"></i> Voir la pièce
+                                </button>
+                            </div>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+
+                    <!-- Scores -->
+                    <div class="row mt-4 g-3">
+                        {% if score_empreinte %}
+                        <div class="col-sm-6">
+                            <div class="bg-light p-3 rounded text-center shadow-sm">
+                                <i class="bi bi-fingerprint fs-3 text-info"></i>
+                                <div class="mt-2 fw-bold">Score empreinte</div>
+                                <div class="score-circle mt-2">
+                                    <svg width="100" height="100" viewBox="0 0 120 120">
+                                        <circle cx="60" cy="60" r="54" stroke="#eee" stroke-width="12" fill="none"/>
+                                        <circle cx="60" cy="60" r="54"
+                                                stroke="{% if score_empreinte >= 70 %}#28a745{% elif score_empreinte >= 40 %}#ffc107{% else %}#dc3545{% endif %}"
+                                                stroke-width="12" stroke-linecap="round" fill="none"
+                                                stroke-dasharray="339.292" stroke-dashoffset="{{ dashoffset_empreinte|floatformat:2 }}">
+                                        </circle>
+                                        <text x="60" y="65" text-anchor="middle" font-size="20" fill="#333" font-weight="bold">{{ score_empreinte|floatformat:0 }}%</text>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if score_reconnaissance is not None %}
+                        <div class="col-sm-6">
+                            <div class="bg-light p-3 rounded text-center shadow-sm">
+                                <i class="bi bi-camera fs-3 text-success"></i>
+                                <div class="mt-2 fw-bold">Score visage</div>
+                                <div class="score-circle mt-2">
+                                    <svg width="100" height="100" viewBox="0 0 120 120">
+                                        <circle cx="60" cy="60" r="54" stroke="#eee" stroke-width="12" fill="none"/>
+                                        <circle cx="60" cy="60" r="54"
+                                                stroke="{% if score_reconnaissance >= 70 %}#28a745{% elif score_reconnaissance >= 40 %}#ffc107{% else %}#dc3545{% endif %}"
+                                                stroke-width="12" stroke-linecap="round" fill="none"
+                                                stroke-dasharray="339.292" stroke-dashoffset="{{ dashoffset_reconnaissance }}">
+                                        </circle>
+                                        <text x="60" y="65" text-anchor="middle" font-size="20" fill="#333" font-weight="bold">{{ score_reconnaissance|floatformat:0 }}%</text>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Boutons d'action -->
+                    <div class="mt-4 d-flex flex-wrap gap-3">
+                        <a href="{% url 'ajouter_detention' detenu_reconnu.id %}" class="btn btn-success"><i class="bi bi-plus-circle"></i> Ajouter une détention</a>
+                        <a href="{% url 'detail_detenu' detenu_reconnu.id %}" class="btn btn-outline-primary"><i class="bi bi-eye"></i> Profil complet</a>
+                        <button onclick="window.print()" class="btn btn-outline-secondary"><i class="bi bi-printer"></i> Imprimer</button>
+                    </div>
+                </div>
+
+                <!-- Colonne droite : images biométriques -->
+                <div class="col-md-4">
+                    <!-- Carte visage avec bouton tous les angles -->
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header bg-primary-light text-primary fw-bold d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-camera"></i> Visage (face)</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#visageModal">
+                                <i class="bi bi-grid-3x3-gap-fill"></i> Tous les angles
+                            </button>
+                        </div>
+                        <div class="card-body text-center">
+                            {% for v in detenu_reconnu.visages.all %}
+                                {% if v.type_image == 'FACE' and v.image %}
+                                    <img src="{{ v.image.url }}" class="img-fluid rounded" style="max-height:180px;">
+                                {% endif %}
+                            {% empty %}
+                                <i class="bi bi-camera-off fs-1 text-muted"></i><br>Aucune photo de face
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <!-- Carte empreinte avec bouton tous les doigts -->
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary-light text-primary fw-bold d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-fingerprint"></i> Empreinte digitale</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#empreinteModal">
+                                <i class="bi bi-grid-3x3-gap-fill"></i> Tous les doigts
+                            </button>
+                        </div>
+                        <div class="card-body text-center">
+                            {% with empreinte=detenu_reconnu.empreintes.all|first %}
+                                {% if empreinte and empreinte.image %}
+                                    <img src="{{ empreinte.image.url }}" class="img-fluid rounded" style="max-height:180px;">
+                                    <div class="mt-2 small text-muted">Doigt : {{ empreinte.get_doigt_display }}</div>
+                                {% else %}
+                                    <i class="bi bi-fingerprint fs-1 text-muted"></i><br>Aucune empreinte
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal : tous les angles du visage -->
+    <div class="modal fade" id="visageModal" tabindex="-1" aria-labelledby="visageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="visageModalLabel"><i class="bi bi-camera"></i> Tous les angles du visage</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        {% for angle in detenu_reconnu.visages.all %}
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                {% if angle.image %}
+                                    <img src="{{ angle.image.url }}" class="card-img-top" alt="Visage {{ angle.get_type_image_display }}" style="height: 200px; object-fit: cover;">
+                                {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                        <i class="bi bi-camera-off fs-1 text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">{{ angle.get_type_image_display }}</h6>
+                                    {% if angle.qualite %}
+                                        <small class="text-muted">Qualité : {{ angle.qualite|floatformat:2 }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12 text-center text-muted py-4">
+                            <i class="bi bi-camera-off fs-1"></i>
+                            <p>Aucune photo de visage enregistrée.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal : toutes les empreintes (10 doigts) -->
+    <div class="modal fade" id="empreinteModal" tabindex="-1" aria-labelledby="empreinteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="empreinteModalLabel"><i class="bi bi-fingerprint"></i> Empreintes digitales (10 doigts)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="fingerprint-grid">
+                        {% with doigts_list='TL,IL,ML,RL,LL,TR,IR,MR,RR,LR' %}
+                        {% with labels='Pouce gauche,Index gauche,Majeur gauche,Annulaire gauche,Auriculaire gauche,Pouce droit,Index droit,Majeur droit,Annulaire droit,Auriculaire droit' %}
+                            {% for code in doigts_list.split %}
+                                {% with label=labels.split|slice:forloop.counter0|first %}
+                                    {% with empreinte_trouvee=False %}
+                                        {% for e in detenu_reconnu.empreintes.all %}
+                                            {% if e.doigt == code %}
+                                                <div class="fingerprint-item">
+                                                    <img src="{{ e.image.url }}" alt="Empreinte {{ label }}">
+                                                    <div class="mt-2 fw-bold">{{ label }}</div>
+                                                    {% if e.qualite %}<small class="text-muted">Qualité: {{ e.qualite|floatformat:2 }}</small>{% endif %}
+                                                </div>
+                                                {% with empreinte_trouvee=True %}{% endwith %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if not empreinte_trouvee %}
+                                            <div class="fingerprint-item">
+                                                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 100px;">
+                                                    <i class="bi bi-fingerprint text-muted fs-1"></i>
+                                                </div>
+                                                <div class="mt-2 fw-bold text-muted">{{ label }}</div>
+                                                <small class="text-muted">Non enregistré</small>
+                                            </div>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endwith %}
+                            {% endfor %}
+                        {% endwith %}
+                        {% endwith %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal : pièce d'identité -->
+    <div class="modal fade" id="pieceModal" tabindex="-1" aria-labelledby="pieceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="pieceModalLabel"><i class="bi bi-card-identification"></i> Pièce d'identité</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body text-center">
+                    {% with piece=detenu_reconnu.pieces.first %}
+                        {% if piece and piece.image %}
+                            <img src="{{ piece.image.url }}" class="img-fluid rounded" alt="Pièce d'identité">
+                            <div class="mt-3">
+                                <p><strong>Type :</strong> {{ piece.get_type_piece_display }}</p>
+                                <p><strong>Numéro :</strong> {{ piece.numero }}</p>
+                                {% if piece.pays_emission %}<p><strong>Pays d'émission :</strong> {{ piece.pays_emission }}</p>{% endif %}
+                                {% if piece.date_expiration %}<p><strong>Date d'expiration :</strong> {{ piece.date_expiration|date:"d/m/Y" }}</p>{% endif %}
+                            </div>
+                        {% else %}
+                            <i class="bi bi-card-image fs-1 text-muted"></i>
+                            <p>Aucune image de pièce d'identité disponible.</p>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-3">
+        <a href="{% url 'verifier_visage' %}" class="btn btn-outline-primary"><i class="bi bi-arrow-repeat"></i> Nouvelle vérification</a>
+        <a href="{% url 'dashboard_user' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour au tableau de bord</a>
+    </div>
+
+    {% else %}
+    <!-- ================= FORMULAIRES DE VÉRIFICATION ================= -->
+    <!-- (inchangé, identique à votre code existant) -->
+    <div class="header">
+        <h2><i class="bi bi-shield-lock"></i> Vérification Biométrique</h2>
+        <p class="text-muted">Choisissez le mode de vérification</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="bi bi-{% if message.tags == 'success' %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- SECTION VISAGE -->
+    <div class="form-card">
+        <div class="form-card-header bg-success bg-opacity-10 text-success">
+            <i class="bi bi-camera-fill"></i> Reconnaissance faciale
+        </div>
+        <div class="form-card-body">
+            <form method="POST" enctype="multipart/form-data" action="{% url 'verifier_visage' %}">
+                {% csrf_token %}
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">📁 Téléverser une photo</label>
+                        <input type="file" class="form-control" name="image_file" accept="image/*" onchange="previewUploadedImage(this)">
+                        <div class="form-text">JPG, PNG, JPEG (max 5MB)</div>
+                        <div class="mt-2" id="upload-preview" style="display:none;">
+                            <img id="uploaded-img" style="max-width:100%; max-height:150px; border-radius:8px;">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">🎥 Capturer avec webcam</label>
+                        <div class="webcam-preview">
+                            <video id="video" autoplay playsinline></video>
+                            <button type="button" class="btn btn-sm btn-success mt-2" onclick="capture()"><i class="bi bi-camera"></i> Capturer</button>
+                        </div>
+                        <input type="hidden" name="captured_image" id="captured_image">
+                        <canvas id="canvas" style="display:none;"></canvas>
+                    </div>
+                </div>
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> Vérifier le visage</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SECTION EMPREINTE -->
+    <div class="form-card">
+        <div class="form-card-header bg-info bg-opacity-10 text-info">
+            <i class="bi bi-fingerprint"></i> Reconnaissance d'empreinte
+        </div>
+        <div class="form-card-body">
+            <form method="POST" enctype="multipart/form-data" action="{% url 'verifier_empreinte' %}">
+                {% csrf_token %}
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">🖐️ Doigt à vérifier</label>
+                        <select name="doigt" class="form-select">
+                            <option value="">-- Tous les doigts --</option>
+                            <option value="TL">Pouce gauche</option><option value="IL">Index gauche</option>
+                            <option value="ML">Majeur gauche</option><option value="RL">Annulaire gauche</option>
+                            <option value="LL">Auriculaire gauche</option><option value="TR">Pouce droit</option>
+                            <option value="IR">Index droit</option><option value="MR">Majeur droit</option>
+                            <option value="RR">Annulaire droit</option><option value="LR">Auriculaire droit</option>
+                        </select>
+                        <div class="form-text">Si vous sélectionnez un doigt, la comparaison sera limitée à ce doigt.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">📁 Téléverser une empreinte</label>
+                        <input type="file" class="form-control" name="empreinte" accept="image/*" onchange="previewFingerprint(this)">
+                        <div class="form-text">JPG, PNG, BMP</div>
+                        <div class="mt-2" id="fingerprint-upload-preview" style="display:none;">
+                            <img id="fingerprint-uploaded-img" style="max-width:100%; max-height:150px; border-radius:8px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6 offset-md-6">
+                        <label class="form-label fw-bold">Ou capturer avec le capteur</label>
+                        <div class="preview-box" id="empreinte-preview">
+                            <span class="text-muted">Aucune empreinte capturée</span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-info mt-2" onclick="capturerEmpreinte()"><i class="bi bi-hand-index-thumb"></i> Capturer</button>
+                        <input type="hidden" name="empreinte_capturee" id="empreinte_capturee">
+                    </div>
+                </div>
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-info text-white"><i class="bi bi-check-circle"></i> Vérifier l'empreinte</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-3 text-end">
+        <a href="{% url 'dashboard_user' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour au tableau de bord</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // ========== WEBCAM POUR VISAGE ==========
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const capturedImageInput = document.getElementById('captured_image');
+    let stream = null;
+
+    function startWebcam() {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(s => { stream = s; video.srcObject = stream; })
+                .catch(err => alert("Erreur webcam : " + err.message));
+        } else {
+            alert("getUserMedia non supporté");
+        }
+    }
+
+    function capture() {
+        if (!stream) { alert("Webcam non active"); return; }
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+        capturedImageInput.value = dataURL;
+        alert("Photo capturée !");
+    }
+    window.capture = capture;
+
+    // Aperçu pour l'upload de visage
+    function previewUploadedImage(input) {
+        const previewDiv = document.getElementById('upload-preview');
+        const img = document.getElementById('uploaded-img');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                previewDiv.style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            previewDiv.style.display = 'none';
+        }
+    }
+
+    // Aperçu pour l'upload d'empreinte
+    function previewFingerprint(input) {
+        const previewDiv = document.getElementById('fingerprint-upload-preview');
+        const img = document.getElementById('fingerprint-uploaded-img');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                previewDiv.style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            previewDiv.style.display = 'none';
+        }
+    }
+
+    // ========== CAPTURE EMPREINTE (simulation) ==========
+    function capturerEmpreinte() {
+        const fakeBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+        document.getElementById('empreinte_capturee').value = fakeBase64;
+        const preview = document.getElementById('empreinte-preview');
+        preview.innerHTML = `<img src="${fakeBase64}" style="max-height:180px;">`;
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-success alert-dismissible fade show mt-2';
+        alertDiv.innerHTML = '<i class="bi bi-check-circle"></i> Empreinte capturée !<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        preview.parentNode.insertBefore(alertDiv, preview.nextElementSibling);
+        setTimeout(() => alertDiv.remove(), 2000);
+    }
+
+    // Démarrer la webcam seulement si on est sur la page de vérification (pas de résultat)
+    if (!{{ detenu_reconnu|yesno:"true,false" }}) {
+        window.addEventListener('DOMContentLoaded', startWebcam);
+        window.addEventListener('beforeunload', () => { if (stream) stream.getTracks().forEach(t => t.stop()); });
+    }
+</script>
+</body>
+</html>

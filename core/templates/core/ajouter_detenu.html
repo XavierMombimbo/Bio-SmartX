@@ -1,0 +1,444 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter un détenu | Système de gestion pénitentiaire</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1d4ed8;
+            --primary-light: #dbeafe;
+            --danger: #dc3545;
+            --success: #28a745;
+            --info: #17a2b8;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+        .form-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        .header {
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 1rem;
+        }
+        .header h2 {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .form-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            border: none;
+            overflow: hidden;
+        }
+        .form-card-header {
+            background-color: var(--primary-light);
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .form-card-body {
+            padding: 1.5rem;
+        }
+        .required-field::after {
+            content: " *";
+            color: var(--danger);
+        }
+        .webcam-panel {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        #video {
+            width: 100%;
+            border-radius: 8px;
+            background: #000;
+            max-height: 320px;
+            object-fit: cover;
+        }
+        .angle-card {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            height: 100%;
+            transition: all 0.2s;
+            background: white;
+        }
+        .angle-preview {
+            width: 100%;
+            height: 160px;
+            background: #f1f3f5;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+        .angle-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .fingerprint-table th, .fingerprint-table td {
+            vertical-align: middle;
+            padding: 0.75rem;
+        }
+        .fingerprint-preview {
+            width: 60px;
+            height: 60px;
+            background: #f1f3f5;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .fingerprint-preview img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .btn-sm i {
+            margin-right: 0.25rem;
+        }
+        .id-preview {
+            max-width: 150px;
+            max-height: 150px;
+            margin-top: 10px;
+        }
+        @media (max-width: 768px) {
+            .fingerprint-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="form-container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="bi bi-info-circle-fill me-1"></i> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="header">
+        <h2><i class="bi bi-person-plus-fill"></i> Ajouter un nouveau détenu</h2>
+        <p class="text-muted">Tous les champs marqués d’un <span class="text-danger">*</span> sont obligatoires</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" action="{% url 'ajouter_detenu' %}" id="ajouterDetenuForm">
+        {% csrf_token %}
+
+        <!-- SECTION 1 : INFORMATIONS PERSONNELLES -->
+        <div class="form-card">
+            <div class="form-card-header"><i class="bi bi-person-lines-fill"></i> Identité</div>
+            <div class="form-card-body">
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label required-field">Nom</label><input type="text" name="nom" class="form-control text-uppercase" required></div>
+                    <div class="col-md-4"><label class="form-label required-field">Postnom</label><input type="text" name="postnom" class="form-control text-uppercase" required></div>
+                    <div class="col-md-4"><label class="form-label required-field">Prénom</label><input type="text" name="prenom" class="form-control text-uppercase" required></div>
+                    <div class="col-md-3"><label class="form-label required-field">Sexe</label>
+                        <select name="sexe" class="form-select" required>
+                            <option value="">-- Sélectionner --</option>
+                            <option value="M">Masculin</option>
+                            <option value="F">Féminin</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3"><label class="form-label required-field">Date de naissance</label><input type="date" name="date_naissance" class="form-control" required></div>
+                    <div class="col-md-3"><label class="form-label required-field">Nationalité</label>
+                        <select name="nationalite" class="form-select" required>
+                            <option value="">-- Sélectionner --</option>
+                            <option value="CONGOLAISE">Congolaise</option>
+                            <option value="ETRANGERE">Étrangère</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3"><label class="form-label required-field">Adresse</label><input type="text" name="adresse" class="form-control text-uppercase" required></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2 : DÉTENTION -->
+        <div class="form-card">
+            <div class="form-card-header bg-danger bg-opacity-10 text-danger"><i class="bi bi-exclamation-diamond-fill"></i> Détention</div>
+            <div class="form-card-body">
+                <div class="mb-3"><label class="form-label required-field">Cause de la détention</label><textarea name="cause" class="form-control text-uppercase" rows="2" required></textarea></div>
+                <div><label class="form-label required-field">Prison</label>
+                    <select name="prison" class="form-select" required>
+                        <option value="">-- Sélectionner une prison --</option>
+                        {% for prison in prisons %}<option value="{{ prison.id }}">{{ prison.nom }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3 : VISAGE (3 ANGLES) -->
+        <div class="form-card">
+            <div class="form-card-header bg-success bg-opacity-10 text-success"><i class="bi bi-camera-fill"></i> Biométrie – Visage (3 angles)</div>
+            <div class="form-card-body">
+                <div class="webcam-panel text-center">
+                    <video id="video" autoplay playsinline style="width:100%; max-width:500px; border-radius:12px;"></video>
+                    <div class="mt-3 d-flex flex-wrap justify-content-center gap-2">
+                        <button type="button" class="btn btn-outline-primary" onclick="captureAngle('FACE')"><i class="bi bi-camera"></i> Capturer face</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="captureAngle('GAUCHE')"><i class="bi bi-arrow-left"></i> Capturer profil gauche</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="captureAngle('DROITE')"><i class="bi bi-arrow-right"></i> Capturer profil droit</button>
+                    </div>
+                    <canvas id="canvas" style="display:none;"></canvas>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="angle-card">
+                            <div class="angle-preview" id="preview-face"><i class="bi bi-camera-off text-muted" style="font-size:2rem;"></i></div>
+                            <label class="form-label fw-bold">Face</label>
+                            <input type="file" class="form-control form-control-sm mt-2" accept="image/*" onchange="previewFile(this, 'FACE')">
+                            <input type="hidden" name="photo_visage_face" id="photo_visage_face">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="angle-card">
+                            <div class="angle-preview" id="preview-gauche"><i class="bi bi-camera-off text-muted" style="font-size:2rem;"></i></div>
+                            <label class="form-label fw-bold">Profil gauche</label>
+                            <input type="file" class="form-control form-control-sm mt-2" accept="image/*" onchange="previewFile(this, 'GAUCHE')">
+                            <input type="hidden" name="photo_visage_gauche" id="photo_visage_gauche">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="angle-card">
+                            <div class="angle-preview" id="preview-droite"><i class="bi bi-camera-off text-muted" style="font-size:2rem;"></i></div>
+                            <label class="form-label fw-bold">Profil droit</label>
+                            <input type="file" class="form-control form-control-sm mt-2" accept="image/*" onchange="previewFile(this, 'DROITE')">
+                            <input type="hidden" name="photo_visage_droite" id="photo_visage_droite">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4 : EMPREINTES (10 DOIGTS) -->
+        <div class="form-card">
+            <div class="form-card-header bg-info bg-opacity-10 text-info"><i class="bi bi-fingerprint"></i> Biométrie – Empreintes digitales (10 doigts)</div>
+            <div class="form-card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered fingerprint-table align-middle">
+                        <thead class="table-light">
+                            <tr><th>Doigt</th><th>Aperçu</th><th>Téléverser</th><th>Capturer</th></tr>
+                        </thead>
+                        <tbody id="fingerprint-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 5 : PIÈCE D'IDENTITÉ -->
+        <div class="form-card">
+            <div class="form-card-header bg-warning bg-opacity-10 text-warning"><i class="bi bi-card-identification"></i> Pièce d'identité</div>
+            <div class="form-card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label required-field">Type de pièce</label>
+                        <select name="type_piece" class="form-select" required>
+                            <option value="">-- Sélectionner --</option>
+                            <option value="CNI">Carte nationale d'identité</option>
+                            <option value="PASS">Passeport</option>
+                            <option value="PERMIS">Permis de conduire</option>
+                            <option value="ELECTEUR">Carte d'électeur</option>
+                            <option value="ETUDIANT">Carte d'étudiant</option>
+                            <option value="ELEVE">Carte d'élève</option>
+                            <option value="AUTRE">Autre</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label required-field">Numéro de pièce</label>
+                        <input type="text" name="numero_piece" class="form-control text-uppercase" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Pays d'émission</label>
+                        <input type="text" name="pays_emission" class="form-control text-uppercase" placeholder="Ex: RDC">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Date d'expiration</label>
+                        <input type="date" name="date_expiration" class="form-control">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Image scannée de la pièce</label>
+                        <input type="file" name="piece_image" class="form-control" accept="image/*" onchange="previewPieceImage(this)">
+                        <div id="piece-preview" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'dashboard_user' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour</a>
+            <button type="submit" class="btn btn-success px-4"><i class="bi bi-save"></i> Enregistrer le détenu</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // ---------- Configuration webcam ----------
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    let stream = null;
+
+    function startWebcam() {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(s => { stream = s; video.srcObject = stream; })
+                .catch(err => alert("Erreur webcam : " + err.message));
+        } else {
+            alert("getUserMedia non supporté");
+        }
+    }
+
+    function captureAngle(angle) {
+        if (!stream) { alert("La webcam n'est pas active."); return; }
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+        if (angle === 'FACE') {
+            document.getElementById('photo_visage_face').value = dataURL;
+            updatePreview('preview-face', dataURL);
+        } else if (angle === 'GAUCHE') {
+            document.getElementById('photo_visage_gauche').value = dataURL;
+            updatePreview('preview-gauche', dataURL);
+        } else if (angle === 'DROITE') {
+            document.getElementById('photo_visage_droite').value = dataURL;
+            updatePreview('preview-droite', dataURL);
+        }
+    }
+
+    function updatePreview(previewId, dataURL) {
+        const container = document.getElementById(previewId);
+        container.innerHTML = `<img src="${dataURL}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+    }
+
+    function previewFile(input, angle) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataURL = e.target.result;
+                if (angle === 'FACE') {
+                    document.getElementById('photo_visage_face').value = dataURL;
+                    updatePreview('preview-face', dataURL);
+                } else if (angle === 'GAUCHE') {
+                    document.getElementById('photo_visage_gauche').value = dataURL;
+                    updatePreview('preview-gauche', dataURL);
+                } else if (angle === 'DROITE') {
+                    document.getElementById('photo_visage_droite').value = dataURL;
+                    updatePreview('preview-droite', dataURL);
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // ---------- Empreintes ----------
+    const DOIGTS = [
+        { code: 'TL', label: 'Pouce gauche' }, { code: 'IL', label: 'Index gauche' },
+        { code: 'ML', label: 'Majeur gauche' }, { code: 'RL', label: 'Annulaire gauche' },
+        { code: 'LL', label: 'Auriculaire gauche' }, { code: 'TR', label: 'Pouce droit' },
+        { code: 'IR', label: 'Index droit' }, { code: 'MR', label: 'Majeur droit' },
+        { code: 'RR', label: 'Annulaire droit' }, { code: 'LR', label: 'Auriculaire droit' }
+    ];
+
+    function generateFingerprintTable() {
+        const tbody = document.getElementById('fingerprint-table-body');
+        tbody.innerHTML = '';
+        DOIGTS.forEach(doigt => {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerHTML = `<strong>${doigt.label}</strong><input type="hidden" name="doigt_${doigt.code}" value="${doigt.code}">`;
+            const previewId = `preview-${doigt.code}`;
+            row.insertCell(1).innerHTML = `<div id="${previewId}" class="fingerprint-preview"><i class="bi bi-fingerprint text-muted"></i></div>`;
+            row.insertCell(2).innerHTML = `<input type="file" class="form-control form-control-sm" accept="image/*" onchange="uploadFingerprint(this, '${doigt.code}')">`;
+            row.insertCell(3).innerHTML = `<button type="button" class="btn btn-sm btn-outline-info" onclick="captureFingerprint('${doigt.code}')"><i class="bi bi-hand-index-thumb"></i> Capturer</button>
+                                           <input type="hidden" name="empreinte_${doigt.code}" id="empreinte_${doigt.code}">`;
+        });
+    }
+
+    function uploadFingerprint(input, doigtCode) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataURL = e.target.result;
+                document.getElementById(`empreinte_${doigtCode}`).value = dataURL;
+                document.getElementById(`preview-${doigtCode}`).innerHTML = `<img src="${dataURL}" style="max-width:100%; max-height:100%;">`;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function captureFingerprint(doigtCode) {
+        const fakeBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+        document.getElementById(`empreinte_${doigtCode}`).value = fakeBase64;
+        const previewDiv = document.getElementById(`preview-${doigtCode}`);
+        previewDiv.innerHTML = `<img src="${fakeBase64}" style="max-width:100%; max-height:100%;">`;
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-success alert-dismissible fade show mt-2';
+        alertDiv.innerHTML = `<i class="bi bi-check-circle"></i> Empreinte (${doigtCode}) capturée !<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+        previewDiv.parentNode.parentNode.querySelector('td:last-child').appendChild(alertDiv);
+        setTimeout(() => alertDiv.remove(), 2000);
+    }
+
+    // ---------- Aperçu pièce d'identité ----------
+    function previewPieceImage(input) {
+        const preview = document.getElementById('piece-preview');
+        preview.innerHTML = '';
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'id-preview img-thumbnail';
+                img.style.maxWidth = '150px';
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // ---------- Initialisation ----------
+    window.addEventListener('DOMContentLoaded', () => {
+        startWebcam();
+        generateFingerprintTable();
+    });
+    window.addEventListener('beforeunload', () => { if (stream) stream.getTracks().forEach(t => t.stop()); });
+
+    // ---------- CONVERSION EN MAJUSCULES AVANT ENVOI ----------
+    const form = document.getElementById('ajouterDetenuForm');
+    function convertirEnMajuscules() {
+        const champsTexte = form.querySelectorAll('input[type="text"], textarea');
+        champsTexte.forEach(champ => {
+            if (champ.value && champ.value.trim() !== '') {
+                champ.value = champ.value.toUpperCase();
+            }
+        });
+    }
+    form.addEventListener('submit', function(e) {
+        convertirEnMajuscules();
+    });
+</script>
+</body>
+</html>

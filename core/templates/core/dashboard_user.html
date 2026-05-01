@@ -1,0 +1,260 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tableau de bord | SmartX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .dashboard-card {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+        }
+        
+        .card-add::before {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+        
+        .card-verify::before {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+        
+        .card-recent::before {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- En-tête -->
+    <header class="bg-gradient-to-r from-blue-800 to-blue-600 text-white px-6 py-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="{% static 'SNVD7231-removebg-preview.png' %}" alt="Logo SmartX" class="h-10">
+                <h1 class="text-2xl font-bold">Tableau de bord</h1>
+            </div>
+            
+            <div class="flex items-center space-x-6">
+                <div class="relative">
+                    <a href="{% url 'messages_admin' %}" class="relative text-white hover:text-blue-200 transition">
+                        <i class="fas fa-bell text-xl"></i>
+                        {% if nb_messages_non_lus > 0 %}
+                            <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1">
+                                {{ nb_messages_non_lus }}
+                            </span>
+                        {% endif %}
+                    </a>
+
+                </div>
+                <a href="{% url 'profil' %}" class="flex items-center space-x-2 group">
+                    <div class="text-right hidden md:block">
+                        <p class="font-medium">{{ user.get_full_name|default:user.username }}</p>
+                        <p class="text-xs text-blue-200">{{ user.groups.first.name|default:"Utilisateur" }}</p>
+                    </div>
+                    {% if user.photo %}
+                        <img src="{{ user.photo.url }}" alt="Photo de profil"
+                            class="w-10 h-10 rounded-full object-cover border-2 border-blue-300 shadow-md group-hover:border-white transition">
+                    {% else %}
+                        <div class="w-10 h-10 rounded-full bg-blue-400 flex items-center justify-center text-white">
+                            <i class="fas fa-user text-xl"></i>
+                        </div>
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenu principal -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- Section de bienvenue -->
+        <div class="mb-10">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Bienvenue, {{ user.username }} </h2>
+            <p class="text-gray-600">Voici votre tableau de bord personnel. Accédez rapidement aux fonctionnalités principales.</p>
+        </div>
+        
+        <!-- Cartes de fonctionnalités -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <!-- Ajouter un détenu -->
+            <div class="dashboard-card card-add bg-white shadow-md">
+                <div class="p-6 flex flex-col h-full">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center mr-4">
+                            <i class="fas fa-user-plus text-2xl text-green-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800">Ajouter un détenu</h3>
+                    </div>
+                    <p class="text-gray-600 mb-6 flex-grow">Enregistrez un nouveau détenu avec ses données biométriques complètes.</p>
+                    <a href="{% url 'ajouter_detenu' %}" class="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-green-500 text-white font-medium rounded-lg text-center hover:opacity-90 transition">
+                        <i class="fas fa-plus mr-2"></i> Nouveau détenu
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Vérification biométrique -->
+            <div class="dashboard-card card-verify bg-white shadow-md">
+                <div class="p-6 flex flex-col h-full">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-lg bg-yellow-100 flex items-center justify-center mr-4">
+                            <i class="fas fa-fingerprint text-2xl text-yellow-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800">Vérification biométrique</h3>
+                    </div>
+                    <p class="text-gray-600 mb-6 flex-grow">Identifiez un détenu via reconnaissance faciale ou empreinte digitale.</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <a href="{% url 'verifier_visage' %}" class="py-3 px-4 bg-gradient-to-r from-yellow-600 to-yellow-500 text-white font-medium rounded-lg text-center hover:opacity-90 transition">
+                            <i class="fas fa-camera mr-2"></i> Visage
+                        </a>
+                        <a href="{% url 'verifier_empreinte' %}" class="py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-500 text-white font-medium rounded-lg text-center hover:opacity-90 transition">
+                            <i class="fas fa-hand mr-2"></i> Empreinte
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Derniers détenus -->
+            <div class="dashboard-card card-recent bg-white shadow-md">
+                <div class="p-6 flex flex-col h-full">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center mr-4">
+                            <i class="fas fa-clock text-2xl text-blue-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800">Derniers détenus</h3>
+                    </div>
+                    <p class="text-gray-600 mb-6 flex-grow">Consultez les derniers détenus enregistrés dans le système.</p>
+                    <a href="{% url 'dernier_detenu' %}" class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium rounded-lg text-center hover:opacity-90 transition">
+                        <i class="fas fa-list mr-2"></i> Voir la liste
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section d'activité récente -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-12">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                    <i class="fas fa-history text-blue-500 mr-3"></i>
+                    Activité récente
+                </h3>
+            </div>
+            <div class="divide-y divide-gray-200">
+                <div class="p-6 hover:bg-gray-50 transition">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 bg-green-100 rounded-lg p-3 mr-4">
+                            <i class="fas fa-user-plus text-green-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800">Nouveau détenu enregistré</p>
+                            <p class="text-sm text-gray-500">Jean Dupont - Prison Centrale • 15 min ago</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 hover:bg-gray-50 transition">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 bg-yellow-100 rounded-lg p-3 mr-4">
+                            <i class="fas fa-fingerprint text-yellow-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800">Vérification biométrique</p>
+                            <p class="text-sm text-gray-500">Score de reconnaissance: 92% • 1 heure ago</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 hover:bg-gray-50 transition">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3 mr-4">
+                            <i class="fas fa-user-edit text-blue-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800">Mise à jour de profil</p>
+                            <p class="text-sm text-gray-500">Détails modifiés pour détenu #2456 • 2 heures ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 text-center">
+                <a href="#" class="text-blue-600 font-medium hover:text-blue-800 transition">Voir toute l'activité</a>
+            </div>
+        </div>
+        
+        <!-- Notification de sécurité -->
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3 mr-4">
+                    <i class="fas fa-shield-alt text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Bonnes pratiques de sécurité</h3>
+                    <p class="text-gray-600 mb-4">Cette plateforme contient des données sensibles. Veuillez suivre ces directives :</p>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-600">
+                        <li>A votre premiere connexion, changez votre mot de passe et ne partagez jamais vos identifiants de connexion</li>
+                        <li>Déconnectez-vous toujours après utilisation</li>
+                        <li>Vérifiez l'exactitude des données avant soumission</li>
+                        <li>Signalez toute activité suspecte immédiatement</li>
+                        <li>Lisez toujours les notifications des messages administratifs</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pied de page -->
+    <footer class="bg-white border-t border-gray-200 py-6">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <p class="text-sm text-gray-500">&copy; 2026 Smart-X Congo. Tous droits réservés.</p>
+                </div>
+                <div class="flex space-x-4">
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="flex items-center text-gray-600 hover:text-red-600 transition">
+                            <i class="fas fa-sign-out-alt mr-2"></i>
+                            <span>Déconnexion</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

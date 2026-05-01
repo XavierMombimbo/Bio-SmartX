@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ajouter une détention | SmartX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #1d4ed8;
+            --primary-light: #dbeafe;
+            --secondary: #16a34a;
+            --danger: #dc3545;
+            --warning: #f59e0b;
+            --dark: #1e293b;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .detention-card {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .detainee-profile {
+            transition: all 0.3s ease;
+        }
+        
+        .detainee-profile:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <!-- En-tête -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+                <i data-feather="file-plus" class="text-blue-600 mr-3"></i>
+                Nouvelle détention
+            </h1>
+            <a href="{% url 'detail_detenu' detenu.id %}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                <i data-feather="arrow-left" class="w-4 h-4 mr-2"></i>
+                Retour
+            </a>
+        </div>
+
+        <!-- Carte principale -->
+        <div class="detention-card bg-white">
+            <!-- Profil du détenu -->
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i data-feather="user" class="text-blue-500 mr-2 inline"></i>
+                    Fiche du détenu
+                </h2>
+                <div class="detainee-profile bg-gray-50 p-4 rounded-lg flex items-start">
+                    {% if detenu.photo_visage %}
+                        <img src="{{ detenu.photo_visage.url }}" alt="Photo du détenu" class="w-20 h-20 rounded-lg object-cover border border-gray-200 mr-4">
+                    {% else %}
+                        <div class="w-20 h-20 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl mr-4">
+                            {{ detenu.nom|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h3 class="font-medium text-gray-900">{{ detenu.nom }} {{ detenu.postnom }} {{ detenu.prenom }}</h3>
+                        <p class="text-sm text-gray-500">ID: {{ detenu.id }}</p>
+                        <p class="text-sm text-gray-500">Né le: {{ detenu.date_naissance|date:"d/m/Y" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulaire -->
+            <form method="POST" class="p-6">
+                {% csrf_token %}
+                <input type="hidden" name="detenu" value="{{ detenu.id }}">
+                
+                <!-- Prison -->
+                <div class="mb-6">
+                    <label for="prison" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i data-feather="map-pin" class="text-blue-500 inline mr-2"></i>
+                        Établissement pénitentiaire
+                    </label>
+                    <select id="prison" name="prison" required
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="">-- Sélectionner une prison --</option>
+                        {% for prison in prisons %}
+                            <option value="{{ prison.id }}">{{ prison.nom }} - {{ prison.localisation }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Date de début -->
+                <div class="mb-6">
+                    <label for="date_debut" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i data-feather="calendar" class="text-blue-500 inline mr-2"></i>
+                        Date de début de détention
+                    </label>
+                    <input type="date" id="date_debut" name="date_debut" required
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                </div>
+                
+                <!-- Date de fin -->
+                <div class="mb-6">
+                    <label for="date_fin" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i data-feather="calendar" class="text-blue-500 inline mr-2"></i>
+                        Date de fin de détention (optionnel)
+                    </label>
+                    <input type="date" id="date_fin" name="date_fin"
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                    <p class="mt-1 text-sm text-gray-500">Laissez vide si la détention est en cours</p>
+                </div>
+                
+                <!-- Cause -->
+                <div class="mb-6">
+                    <label for="cause" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i data-feather="edit-3" class="text-blue-500 inline mr-2"></i>
+                        Cause de la détention
+                    </label>
+                    <textarea id="cause" name="cause" rows="4" required
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                        placeholder="Décrivez les raisons de cette détention..."></textarea>
+                </div>
+                
+                <!-- Bouton de soumission -->
+                <div class="mt-8">
+                    <button type="submit"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i data-feather="save" class="w-4 h-4 mr-2"></i>
+                        Enregistrer la détention
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pied de page -->
+    <footer class="mt-12 border-t border-gray-200 py-6">
+        <div class="container mx-auto px-4 text-center text-sm text-gray-500">
+            <p>&copy; {% now "Y" %} Smart-X Congo. Tous droits réservés.</p>
+            <p class="mt-1">Version 1.0.0</p>
+        </div>
+    </footer>
+
+    <script>
+        feather.replace();
+        
+        // Définir la date d'aujourd'hui par défaut pour date_debut
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date_debut').value = today;
+            
+            // Validation: date_fin ne peut pas être avant date_debut
+            const dateDebutInput = document.getElementById('date_debut');
+            const dateFinInput = document.getElementById('date_fin');
+            
+            dateDebutInput.addEventListener('change', function() {
+                if (dateFinInput.value && dateFinInput.value < this.value) {
+                    dateFinInput.value = '';
+                    alert('La date de fin ne peut pas être antérieure à la date de début');
+                }
+                dateFinInput.min = this.value;
+            });
+            
+            dateFinInput.addEventListener('change', function() {
+                if (this.value && this.value < dateDebutInput.value) {
+                    this.value = '';
+                    alert('La date de fin ne peut pas être antérieure à la date de début');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

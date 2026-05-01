@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Changement de mot de passe SmartX</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .header img {
+            height: 40px;
+        }
+        
+        .content {
+            padding: 32px;
+        }
+        
+        h1 {
+            color: #1e293b;
+            font-size: 24px;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 24px;
+        }
+        
+        .greeting {
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .message {
+            font-size: 15px;
+            margin-bottom: 24px;
+        }
+        
+        .btn-container {
+            text-align: center;
+            margin: 32px 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(29, 78, 216, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(29, 78, 216, 0.25);
+        }
+        
+        .warning {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .footer {
+            background-color: #f1f5f9;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        .logo-text {
+            color: white;
+            font-weight: 600;
+            font-size: 20px;
+            margin-top: 10px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- En-tête -->
+        <div class="header">
+            <div style="display: inline-block;">
+                <span class="logo-text">SMARTX</span>
+            </div>
+        </div>
+        
+        <!-- Contenu -->
+        <div class="content">
+            <h1>Demande de changement de mot de passe</h1>
+            
+            <div class="greeting">
+                Bonjour <strong>{{ user.get_full_name }}</strong>,
+            </div>
+            
+            <div class="message">
+                <p>Nous avons reçu une demande de réinitialisation de votre mot de passe pour votre compte SmartX.</p>
+                <p>Pour procéder au changement, veuillez cliquer sur le bouton ci-dessous :</p>
+            </div>
+            
+            <div class="btn-container">
+                <a href="{{ lien_confirmation }}" class="btn">Changer mon mot de passe</a>
+            </div>
+            
+            <div class="message">
+                <p>Ce lien expirera dans 24 heures pour des raisons de sécurité.</p>
+                <p>Si vous ne parvenez pas à cliquer sur le bouton, copiez et collez le lien suivant dans votre navigateur :</p>
+                <p style="word-break: break-all; font-size: 13px; color: #475569; background-color: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 8px;">
+                    {{ lien_confirmation }}
+                </p>
+            </div>
+            
+            <div class="warning">
+                <p>Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet email ou <a href="mailto:support@smartx.com" style="color: #3b82f6;">nous contacter</a> immédiatement.</p>
+                <p>Votre mot de passe ne sera pas modifié tant que vous n'aurez pas accédé au lien ci-dessus et créé un nouveau mot de passe.</p>
+            </div>
+        </div>
+        
+        <!-- Pied de page -->
+        <div class="footer">
+            <p>&copy; 2025 SmartX. Tous droits réservés.</p>
+            <p style="margin-top: 8px;">
+                <a href="#" style="color: #64748b; text-decoration: none; margin: 0 8px;">Confidentialité</a>
+                <a href="#" style="color: #64748b; text-decoration: none; margin: 0 8px;">Conditions</a>
+                <a href="#" style="color: #64748b; text-decoration: none; margin: 0 8px;">Aide</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

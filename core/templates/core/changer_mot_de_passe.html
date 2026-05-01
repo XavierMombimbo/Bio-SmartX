@@ -1,0 +1,356 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Changer le mot de passe | SmartX</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .password-card {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .password-requirements {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+        
+        .requirement {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+        
+        .requirement i {
+            margin-right: 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .requirement.valid {
+            color: #10b981;
+        }
+        
+        .requirement.invalid {
+            color: #64748b;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 flex flex-col">
+    <div class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="w-full max-w-md">
+            <div class="password-card bg-white p-8">
+                <!-- Logo et titre -->
+                <div class="text-center mb-8">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+                        <i data-feather="lock" class="h-6 w-6 text-blue-600"></i>
+                    </div>
+                    <h2 class="mt-4 text-2xl font-bold text-gray-900">
+                        Changer votre mot de passe
+                    </h2>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Pour votre sécurité, choisissez un mot de passe robuste
+                    </p>
+                </div>
+
+                <!-- Messages d'erreur -->
+                {% if form.errors %}
+                <div class="mb-4 bg-red-50 border-l-4 border-red-500 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i data-feather="alert-circle" class="h-5 w-5 text-red-500"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">
+                                Erreur lors du changement de mot de passe
+                            </h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% for error in form.non_field_errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Formulaire -->
+                <form method="post" class="space-y-6" id="password-change-form" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Mot de passe actuel -->
+                    <div>
+                        <label for="old_password" class="block text-sm font-medium text-gray-700">
+                            Mot de passe actuel
+                        </label>
+                        <div class="mt-1 relative">
+                            <input id="old_password" name="old_password" type="password" required
+                                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <i data-feather="eye" class="h-5 w-5 text-gray-400 cursor-pointer toggle-password"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Nouveau mot de passe -->
+                    <div>
+                        <label for="new_password1" class="block text-sm font-medium text-gray-700">
+                            Nouveau mot de passe
+                        </label>
+                        <div class="mt-1 relative">
+                            <input id="new_password1" name="new_password1" type="password" required
+                                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <i data-feather="eye" class="h-5 w-5 text-gray-400 cursor-pointer toggle-password"></i>
+                            </div>
+                        </div>
+                        <div class="password-strength bg-gray-200" id="password-strength"></div>
+                        <div class="password-requirements" id="password-requirements">
+                            <div class="requirement invalid" id="length-req">
+                                <i data-feather="circle"></i>
+                                <span>8 caractères minimum</span>
+                            </div>
+                            <div class="requirement invalid" id="number-req">
+                                <i data-feather="circle"></i>
+                                <span>Au moins 1 chiffre</span>
+                            </div>
+                            <div class="requirement invalid" id="special-req">
+                                <i data-feather="circle"></i>
+                                <span>Au moins 1 caractère spécial</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Confirmation nouveau mot de passe -->
+                    <div>
+                        <label for="new_password2" class="block text-sm font-medium text-gray-700">
+                            Confirmer le nouveau mot de passe
+                        </label>
+                        <div class="mt-1 relative">
+                            <input id="new_password2" name="new_password2" type="password" required
+                                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <i data-feather="eye" class="h-5 w-5 text-gray-400 cursor-pointer toggle-password"></i>
+                            </div>
+                        </div>
+                        <div class="mt-1 text-sm text-gray-500" id="password-match">
+                            <i data-feather="alert-circle" class="hidden h-4 w-4 text-red-500 inline"></i>
+                            <span id="match-text">Les mots de passe doivent correspondre</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Bouton de soumission -->
+                    <div>
+                        <button type="submit" id="submit-btn"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
+                            Changer le mot de passe
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Lien retour -->
+            <div class="mt-6 text-center">
+                <a href="{% url 'dashboard_admin' %}" class="text-sm font-medium text-blue-600 hover:text-blue-500">
+                    <i data-feather="arrow-left" class="inline h-4 w-4"></i>
+                    Retour au tableau de bord
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pied de page -->
+    <footer class="text-center py-4 text-xs text-gray-500">
+        <p>&copy; {% now "Y" %} Smart-X Congo. Tous droits réservés.</p>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        feather.replace();
+        
+        // Éléments DOM
+        const oldPasswordInput = document.getElementById('old_password');
+        const password1Input = document.getElementById('new_password1');
+        const password2Input = document.getElementById('new_password2');
+        const submitBtn = document.getElementById('submit-btn');
+        const form = document.getElementById('password-change-form');
+        
+        // Configuration des règles de mot de passe
+        const passwordRules = [
+            { id: 'length-req', pattern: /.{8,}/, text: '8 caractères minimum' },
+            { id: 'number-req', pattern: /\d/, text: 'Au moins 1 chiffre' },
+            { id: 'upper-req', pattern: /[A-Z]/, text: 'Au moins 1 majuscule' },
+            { id: 'lower-req', pattern: /[a-z]/, text: 'Au moins 1 minuscule' },
+            { id: 'special-req', pattern: /[!@#$%^&*(),.?":{}|<>]/, text: 'Au moins 1 caractère spécial' }
+        ];
+
+        // Création des indicateurs de force si ils n'existent pas
+        const requirementsContainer = document.getElementById('password-requirements');
+        if (requirementsContainer.children.length < passwordRules.length) {
+            passwordRules.forEach(rule => {
+                if (!document.getElementById(rule.id)) {
+                    const div = document.createElement('div');
+                    div.id = rule.id;
+                    div.className = 'requirement invalid';
+                    div.innerHTML = `<i data-feather="circle"></i><span>${rule.text}</span>`;
+                    requirementsContainer.appendChild(div);
+                }
+            });
+            feather.replace();
+        }
+
+        // Fonction de validation principale
+        function validateForm() {
+            const oldPassword = oldPasswordInput.value.trim();
+            const password1 = password1Input.value.trim();
+            const password2 = password2Input.value.trim();
+            
+            // Vérifier que tous les champs sont remplis
+            if (!oldPassword || !password1 || !password2) {
+                submitBtn.disabled = true;
+                return false;
+            }
+            
+            // Vérifier la force du mot de passe
+            const isStrong = passwordRules.every(rule => rule.pattern.test(password1));
+            
+            // Vérifier la correspondance
+            const passwordsMatch = password1 === password2;
+            
+            // Activer/désactiver le bouton
+            submitBtn.disabled = !(isStrong && passwordsMatch);
+            
+            return isStrong && passwordsMatch;
+        }
+        
+        // Vérifie si le mot de passe est fort
+        function isPasswordStrong(password) {
+            const hasLength = password.length >= 8;
+            const hasNumber = /\d/.test(password);
+            const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+            
+            return hasLength && hasNumber && hasSpecial;
+        }
+        
+        // Met à jour l'affichage de la force
+        function updatePasswordStrength(password) {
+            passwordRules.forEach(rule => {
+                const element = document.getElementById(rule.id);
+                if (element) {
+                    const isValid = rule.pattern.test(password);
+                    element.classList.toggle('valid', isValid);
+                    element.classList.toggle('invalid', !isValid);
+                    const icon = element.querySelector('i');
+                    if (icon) feather.replace(icon, isValid ? 'check-circle' : 'circle');
+                }
+            });
+
+            const strengthBar = document.getElementById('password-strength');
+            if (strengthBar) {
+                const validCount = passwordRules.filter(rule => rule.pattern.test(password)).length;
+                const percentage = Math.floor((validCount / passwordRules.length) * 100);
+                
+                strengthBar.style.width = `${percentage}%`;
+                strengthBar.style.backgroundColor = 
+                    percentage >= 100 ? '#10b981' :
+                    percentage >= 60 ? '#f59e0b' :
+                    '#ef4444';
+            }
+        }
+        
+        // Met à jour l'affichage de correspondance
+        function updatePasswordMatch() {
+            const password1 = password1Input.value;
+            const password2 = password2Input.value;
+            const matchText = document.getElementById('match-text');
+            const matchIcon = document.querySelector('#password-match i');
+            
+            if (!matchText) return;
+            
+            if (password2.length === 0) {
+                matchText.textContent = 'Les mots de passe doivent correspondre';
+                matchText.className = 'text-gray-500';
+                if (matchIcon) matchIcon.className = 'hidden h-4 w-4';
+            } 
+            else if (password1 === password2) {
+                matchText.textContent = 'Les mots de passe correspondent';
+                matchText.className = 'text-green-500';
+                if (matchIcon) matchIcon.className = 'hidden h-4 w-4';
+            } 
+            else {
+                matchText.textContent = 'Les mots de passe ne correspondent pas';
+                matchText.className = 'text-red-500';
+                if (matchIcon) {
+                    matchIcon.className = 'h-4 w-4 text-red-500 inline';
+                    feather.replace(matchIcon, 'alert-circle');
+                }
+            }
+        }
+        
+        // Gestionnaire d'événement principal
+        function handleInput() {
+            updatePasswordStrength(password1Input.value);
+            updatePasswordMatch();
+            validateForm();
+            feather.replace();
+        }
+        
+        // Basculer la visibilité du mot de passe
+        document.querySelectorAll('.toggle-password').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const input = this.parentNode.previousElementSibling;
+                if (input) {
+                    input.type = input.type === 'password' ? 'text' : 'password';
+                    feather.replace(this, input.type === 'password' ? 'eye' : 'eye-off');
+                }
+            });
+        });
+        
+        // Écouteurs d'événements
+        [oldPasswordInput, password1Input, password2Input].forEach(input => {
+            if (input) input.addEventListener('input', handleInput);
+        });
+        
+        // Validation initiale
+        handleInput();
+        
+        // Empêcher la soumission si invalide
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                    alert('Veuillez vérifier que:\n1. Tous les champs sont remplis\n2. Le mot de passe est assez fort\n3. Les mots de passe correspondent');
+                    return false;
+                }
+                return true;
+            });
+        }
+    });
+    </script>
+</body>
+</html>

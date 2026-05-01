@@ -1,0 +1,36 @@
+tunnel: bio-smartx
+credentials-file: ./tunnel-creds.json
+
+# Important pour éviter les erreurs 503 intermittentes sous Windows
+protocol: http2
+
+ingress:
+  - hostname: smartx.bio-smartx.com
+    service: http://127.0.0.1:8080
+    originRequest:
+      httpHostHeader: smartx.bio-smartx.com
+      connectTimeout: 120s
+      tlsTimeout: 90s
+      tcpKeepAlive: 30s
+      noHappyEyeballs: true
+
+  - hostname: app.bio-smartx.com
+    service: http://127.0.0.1:8080
+    originRequest:
+      httpHostHeader: app.bio-smartx.com
+      connectTimeout: 120s
+
+  - hostname: www.bio-smartx.com
+    service: http://127.0.0.1:8080
+    originRequest:
+      httpHostHeader: www.bio-smartx.com
+      connectTimeout: 120s
+
+  - hostname: bio-smartx.com
+    service: http://127.0.0.1:8080
+    originRequest:
+      httpHostHeader: bio-smartx.com
+      connectTimeout: 120s
+
+  # Fallback obligatoire
+  - service: http_status:404
